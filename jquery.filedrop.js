@@ -71,7 +71,8 @@
         progressUpdated: empty,
         globalProgressUpdated: empty,
         speedUpdated: empty,
-        sendBoundary: (window.FormData || $.browser.mozilla)
+        sendBoundary: (window.FormData || $.browser.mozilla),
+        bindOnContainerClick: false
     },
     errors = ["BrowserNotSupported", "TooManyFiles", "FileTooLarge", "FileTypeNotAllowed", "NotFound", "NotReadable", "AbortError", "ReadError", "FileExtensionNotAllowed"],
             doc_leave_timer, stop_loop = false,
@@ -83,18 +84,16 @@
         }, default_opts, options),
                 global_progress = [];
 
+        var self = this;
+
         this.on('drop', drop).on('dragstart', opts.dragStart).on('dragenter', dragEnter).on('dragover', dragOver).on('dragleave', dragLeave);
         $(document).on('drop', docDrop).on('dragenter', docEnter).on('dragover', docOver).on('dragleave', docLeave);
 
+        // We want to hide the fallback
+        $('#' + opts.fallback_id).css('display', 'block').css('width', '0').css('height', '0');
+
         // the HTML element
         opts.element = this;
-
-        $('#' + opts.fallback_id).change(function(e) {
-            opts.drop(e);
-            files = e.target.files;
-            files_count = files.length;
-            upload();
-        });
 
         function drop(e) {
 
@@ -544,6 +543,19 @@
                     opts.docLeave.call(_this, e);
                 };
             })(this), opts.timeoutLeave);
+        }
+
+        $('#' + opts.fallback_id).change(function(e) {
+            opts.drop.call(self, e);
+            files = e.target.files;
+            files_count = files.length;
+            upload.call(self);
+        });
+
+        if (opts.bindOnContainerClick) {
+            $(this).on('click', function(evt) {
+                $('#' + opts.fallback_id).trigger('click');
+            });
         }
 
         return this;
