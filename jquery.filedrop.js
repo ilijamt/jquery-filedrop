@@ -380,7 +380,7 @@
                 }
 
                 upload.index = index;
-                upload.file = file;globalProgress()
+                upload.file = file;
                 upload.downloadStartTime = start_time;
                 upload.currentStart = start_time;
                 upload.currentProgress = 0;
