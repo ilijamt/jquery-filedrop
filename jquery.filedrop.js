@@ -281,9 +281,7 @@
             // Helper function to enable pause of processing to wait
             // for in process queue to complete
             var pause = function(timeout) {
-                setTimeout(function(_this) {
-                    process.call(_this);
-                }, timeout, this);
+                setTimeout(process, timeout);
                 return;
             };
 
@@ -346,17 +344,13 @@
                             }
                         };
 
-                        reader.onloadend = (function(_this) {
-                            return !opts.beforeSend ? function(_e) {
-                                return send.call(_this, _e);
-                            } : function(e) {
-                                opts.beforeSend.call(_this, files[fileIndex], fileIndex, function() {
-                                    send.call(_this, e);
-                                });
-                            };
-                        })(this);
+                        reader.onloadend = !opts.beforeSend ? send : function(e) {
+                            opts.beforeSend(files[fileIndex], fileIndex, function() {
+                                send(e);
+                            });
+                        };
 
-                        reader.readAsBinaryString(files[fileIndex]);
+                        reader.readAsDataURL(files[fileIndex]);
 
                     } else {
                         filesRejected++;
@@ -380,7 +374,7 @@
 
             var send = function(e) {
 
-                var fileIndex = (e.srcElement || e.target).index;
+                var fileIndex = ((typeof (e.srcElement) === "undefined") ? e.target : e.srcElement).index;
 
                 // Sometimes the index is not attached to the
                 // event object. Find it by size. Hack for sure.
@@ -403,12 +397,6 @@
                     xhr.withCredentials = opts.withCredentials;
                 }
 
-                var data = atob(e.target.result.split(',')[1]);
-                if (typeof newName === "string") {
-                    builder = getBuilder(newName, data, mime, boundary);
-                } else {
-                    builder = getBuilder(file.name, data, mime, boundary);
-                }
                 upload.index = index;
                 upload.file = file;
                 upload.downloadStartTime = start_time;
@@ -425,23 +413,36 @@
                     xhr.open(opts.requestType, opts.url, true);
                 }
 
-                xhr.setRequestHeader('content-type', 'multipart/form-data; boundary=' + boundary);
-                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-
                 // Add headers
                 $.each(opts.headers, function(k, v) {
                     xhr.setRequestHeader(k, v);
                 });
 
+                var paramname = opts.paramname;
+
+                if (jQuery.isFunction(paramname)) {
+                    paramname = paramname(file);
+                }
+
                 if (opts.sendBoundary) {
-                    // we use browsers native functionality 
+                    // we use browsers native functionality
                     var f = new FormData();
-                    f.append(typeof (opts.paramname) === "function" ? opts.paramname() : opts.paramname, file);
+
+                    f.append(paramname, file);
                     $.each(opts.data, function(k, v) {
                         f.append(k, v);
                     });
                     xhr.send(f);
                 } else {
+                    xhr.setRequestHeader('content-type', 'multipart/form-data; boundary=' + boundary);
+                    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+                    var data = atob(e.target.result.split(',')[1]);
+                    if (typeof newName === "string") {
+                        builder = getBuilder(newName, data, mime, boundary);
+                    } else {
+                        builder = getBuilder(file.name, data, mime, boundary);
+                    }
                     // we need to simulate the browser native functionality
                     var boundary = '------multipartformboundary' + (new Date()).getTime();
                     xhr.setRequestHeader('content-type', 'multipart/form-data; boundary=' + boundary);
