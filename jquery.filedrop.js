@@ -90,9 +90,9 @@
         this.on('drop', drop).on('dragstart', opts.dragStart).on('dragenter', dragEnter).on('dragover', dragOver).on('dragleave', dragLeave);
         $(document).on('drop', docDrop).on('dragenter', docEnter).on('dragover', docOver).on('dragleave', docLeave);
 
-        this.on(opts.triggerStartUploadEvent, function(){
+        this.on(opts.triggerStartUploadEvent, function() {
 
-            if ( opts.autoStartUpload ) {
+            if (opts.autoStartUpload) {
                 return;
             }
 
@@ -263,9 +263,11 @@
 
             if (opts.allowedfileextensions.push && opts.allowedfileextensions.length) {
                 for (var fileIndex = files.length; fileIndex--; ) {
-                    var allowedextension = false;
+                    var allowedextension = false, leftName, rightName;
                     for (i = 0; i < opts.allowedfileextensions.length; i++) {
-                        if (files[fileIndex].name.substr(files[fileIndex].name.length - opts.allowedfileextensions[i].length).toLowerCase() == opts.allowedfileextensions[i].toLowerCase()) {
+                        leftName = files[fileIndex].name.substr(files[fileIndex].name.length - opts.allowedfileextensions[i].length).toLowerCase();
+                        rightName = opts.allowedfileextensions[i].toLowerCase();
+                        if (leftName === rightName) {
                             allowedextension = true;
                         }
                     }
