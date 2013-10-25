@@ -72,7 +72,9 @@
         speedUpdated: empty,
         sendBoundary: (window.FormData || $.browser.mozilla),
         bindOnContainerClick: false,
-        hideFallbackElement: true
+        hideFallbackElement: true,
+        autoStartUpload: true,
+        triggerStartUploadEvent: 'triggerUploadManually'
     },
     errors = ["BrowserNotSupported", "TooManyFiles", "FileTooLarge", "FileTypeNotAllowed", "NotFound", "NotReadable", "AbortError", "ReadError", "FileExtensionNotAllowed"];
 
@@ -88,6 +90,15 @@
         this.on('drop', drop).on('dragstart', opts.dragStart).on('dragenter', dragEnter).on('dragover', dragOver).on('dragleave', dragLeave);
         $(document).on('drop', docDrop).on('dragenter', docEnter).on('dragover', docOver).on('dragleave', docLeave);
 
+        this.on(opts.triggerStartUploadEvent, function(){
+
+            if ( opts.autoStartUpload ) {
+                return;
+            }
+
+            upload.call(self);
+        });
+
         // We want to hide the fallback
         if (opts.hideFallbackElement) {
             $('#' + opts.fallback_id).css({
@@ -96,6 +107,7 @@
                 height: 0
             });
         }
+
         // the HTML element
         opts.element = this;
 
@@ -109,7 +121,9 @@
             opts.drop(e);
             files = e.target.files;
             files_count = files.length;
-            upload();
+            if (opts.autoStartUpload) {
+                upload.call(self);
+            }
         });
 
         function drop(e) {
@@ -140,6 +154,8 @@
                     crlf = '\r\n',
                     builder = '',
                     paramname = opts.paramname;
+
+            filename = encodeURIComponent(filename);
 
             if (opts.data) {
                 var params = $.param(opts.data).replace(/\+/g, '%20').split(/&/);
@@ -249,7 +265,7 @@
                 for (var fileIndex = files.length; fileIndex--; ) {
                     var allowedextension = false;
                     for (i = 0; i < opts.allowedfileextensions.length; i++) {
-                        if (files[fileIndex].name.substr(files[fileIndex].name.length - opts.allowedfileextensions[i].length) == opts.allowedfileextensions[i]) {
+                        if (files[fileIndex].name.substr(files[fileIndex].name.length - opts.allowedfileextensions[i].length).toLowerCase() == opts.allowedfileextensions[i].toLowerCase()) {
                             allowedextension = true;
                         }
                     }
